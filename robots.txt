@@ -1,5 +1,5 @@
-User-agent: Googlebot
-Disallow: /nogooglebot/
 
 User-agent: *
 Allow: /
+
+Sitemap: https://donglin94.github.io/blog/sitemap-index.xml

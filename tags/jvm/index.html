@@ -1,132 +1,85 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width">
-    <link rel="icon" type="image/svg+xml" href="/blog/favicon.svg">
-    <link rel="canonical" href="https://donglin94.github.io/blog/tags/jvm/">
-    <meta name="generator" content="Astro v2.0.8">
-
-    <!-- General Meta Tags -->
-    <title>Tag:jvm | DongLin&#39;s Blog</title>
-    <meta name="title" content="Tag:jvm | DongLin's Blog">
-    <meta name="description" content="东临的博客">
-    <meta name="author" content="东临">
-    <link rel="sitemap" href="/blog/sitemap-index.xml">
-    <link rel="alternate" type="application/rss+xml" href="http://donglin94.github.io/blog/rss.xml">
-
-    <!-- Open Graph / Facebook -->
-    <meta property="og:title" content="Tag:jvm | DongLin's Blog">
-    <meta property="og:description" content="东临的博客">
-    <meta property="og:url" content="https://donglin94.github.io/blog/tags/jvm/">
-    <meta property="og:image" content="https://donglin94.github.io/astropaper-og.jpg">
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://donglin94.github.io/blog/tags/jvm/">
-    <meta property="twitter:title" content="Tag:jvm | DongLin's Blog">
-    <meta property="twitter:description" content="东临的博客">
-    <meta property="twitter:image" content="https://donglin94.github.io/astropaper-og.jpg">
-
-    <!-- Google Font -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link rel="stylesheet" href="https://npm.elemecdn.com/lxgw-wenkai-screen-webfont/lxgwwenkaiscreen.css" media="print" onload="this.media='all'">
-
-    <meta name="google-site-verification" content="bV_lNTeBfe0KSyR3BBugQCCuntWq18t7FioMb6DyMpU">
-
-    <script defer src="https://umami-psi-blush.vercel.app/script.js" data-website-id="babecfec-e561-45ad-8d6a-303698b46449"></script>
-
-    <script src="/blog/toggle-theme.js"></script>
-  <link rel="stylesheet" href="/blog/_astro/404.dbd182f8.css" />
-<link rel="stylesheet" href="/blog/_astro/about.0ef8a43f.css" />
-<link rel="stylesheet" href="/blog/_astro/about.d8066e1e.css" />
-<link rel="stylesheet" href="/blog/_astro/_slug_.fb16cf70.css" /><script type="module">const e=document.querySelector(".hamburger-menu"),n=document.querySelector("#menu-items")?.classList,t=document.querySelector(".icon-container")?.classList,o=document.querySelector("#first-line")?.classList,a=document.querySelector("#second-line ")?.classList,s=document.querySelector("#third-line")?.classList;e?.addEventListener("click",function(){e?.getAttribute("aria-expanded")==="false"?(e?.setAttribute("aria-expanded","true"),e?.setAttribute("aria-label","Close Menu"),n?.remove("display-none"),t?.remove("flex"),t?.add("relative"),o?.add("rotate-45","absolute","bottom-1/2"),s?.add("display-none"),a?.add("!w-full","-rotate-45","absolute","bottom-1/2")):(e?.setAttribute("aria-expanded","false"),e?.setAttribute("aria-label","Open Menu"),n?.add("display-none"),t?.add("flex"),t?.remove("relative"),o?.remove("rotate-45","absolute","bottom-1/2"),s?.remove("display-none"),a?.remove("!w-full","-rotate-45","absolute","bottom-1/2"))});
-</script></head>
-  <body>
-    <header class="astro-3EF6KSR2">
-  <a id="skip-to-content" href="#main-content" class="astro-3EF6KSR2">Skip to content</a>
-  <div class="nav-container astro-3EF6KSR2">
-    <div class="top-nav-wrap astro-3EF6KSR2">
-      <a href="/blog" class="logo text-transparent whitespace-nowrap astro-3EF6KSR2">
-        DongLin&#39;s Blog
-      </a>
-      <nav id="nav-menu" class="astro-3EF6KSR2">
-        <button class="hamburger-menu focus-outline astro-3EF6KSR2" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items">
-          <div class="icon-container flex astro-3EF6KSR2">
-            <div id="first-line" class="astro-3EF6KSR2"></div>
-            <div id="second-line" class="astro-3EF6KSR2"></div>
-            <div id="third-line" class="astro-3EF6KSR2"></div>
-          </div>
-        </button>
-        <ul id="menu-items" class="display-none sm:flex astro-3EF6KSR2">
-          <li class="astro-3EF6KSR2">
-            <a href="/blog/posts/" class=" astro-3EF6KSR2">
-              Posts
-            </a>
-          </li>
-          <li class="astro-3EF6KSR2">
-            <a href="/blog/about/" class=" astro-3EF6KSR2">
-              About
-            </a>
-          </li>
-          <li class="astro-3EF6KSR2">
-            <a type="button" href="/blog/search/" tabindex="0" class="group focus-outline p-3 sm:p-1  astro-3EF6KSR2 astro-5EUNQZKT" aria-label="search" title="Search">
-  <svg xmlns="http://www.w3.org/2000/svg" class="scale-125 sm:scale-100 astro-3EF6KSR2"><path d="M19.023 16.977a35.13 35.13 0 0 1-1.367-1.384c-.372-.378-.596-.653-.596-.653l-2.8-1.337A6.962 6.962 0 0 0 16 9c0-3.859-3.14-7-7-7S2 5.141 2 9s3.14 7 7 7c1.763 0 3.37-.66 4.603-1.739l1.337 2.8s.275.224.653.596c.387.363.896.854 1.384 1.367l1.358 1.392.604.646 2.121-2.121-.646-.604c-.379-.372-.885-.866-1.391-1.36zM9 14c-2.757 0-5-2.243-5-5s2.243-5 5-5 5 2.243 5 5-2.243 5-5 5z" class="astro-3EF6KSR2"></path>
-              </svg>
-</a>
-          </li>
-          <li class="astro-3EF6KSR2">
-            <button id="theme-btn" class="focus-outline astro-3EF6KSR2" title="Toggles light & dark" aria-label="auto" aria-live="polite">
-                  <svg xmlns="http://www.w3.org/2000/svg" id="moon-svg" class="astro-3EF6KSR2">
-                    <path d="M20.742 13.045a8.088 8.088 0 0 1-2.077.271c-2.135 0-4.14-.83-5.646-2.336a8.025 8.025 0 0 1-2.064-7.723A1 1 0 0 0 9.73 2.034a10.014 10.014 0 0 0-4.489 2.582c-3.898 3.898-3.898 10.243 0 14.143a9.937 9.937 0 0 0 7.072 2.93 9.93 9.93 0 0 0 7.07-2.929 10.007 10.007 0 0 0 2.583-4.491 1.001 1.001 0 0 0-1.224-1.224zm-2.772 4.301a7.947 7.947 0 0 1-5.656 2.343 7.953 7.953 0 0 1-5.658-2.344c-3.118-3.119-3.118-8.195 0-11.314a7.923 7.923 0 0 1 2.06-1.483 10.027 10.027 0 0 0 2.89 7.848 9.972 9.972 0 0 0 7.848 2.891 8.036 8.036 0 0 1-1.484 2.059z" class="astro-3EF6KSR2"></path>
-                  </svg>
-                  <svg xmlns="http://www.w3.org/2000/svg" id="sun-svg" class="astro-3EF6KSR2">
-                    <path d="M6.993 12c0 2.761 2.246 5.007 5.007 5.007s5.007-2.246 5.007-5.007S14.761 6.993 12 6.993 6.993 9.239 6.993 12zM12 8.993c1.658 0 3.007 1.349 3.007 3.007S13.658 15.007 12 15.007 8.993 13.658 8.993 12 10.342 8.993 12 8.993zM10.998 19h2v3h-2zm0-17h2v3h-2zm-9 9h3v2h-3zm17 0h3v2h-3zM4.219 18.363l2.12-2.122 1.415 1.414-2.12 2.122zM16.24 6.344l2.122-2.122 1.414 1.414-2.122 2.122zM6.342 7.759 4.22 5.637l1.415-1.414 2.12 2.122zm13.434 10.605-1.414 1.414-2.122-2.122 1.414-1.414z" class="astro-3EF6KSR2"></path>
-                  </svg>
-                </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-  <div class="max-w-4xl mx-auto px-4">
-  <hr class="border-skin-line" aria-hidden="true">
-</div>
-</header><nav class="breadcrumb astro-ILHXCYM7" aria-label="breadcrumb">
-  <ul class="astro-ILHXCYM7">
-    <li class="astro-ILHXCYM7">
-      <a href="/blog" class="astro-ILHXCYM7">Home</a>
-      <span aria-hidden="true" class="astro-ILHXCYM7">&#62;</span>
-    </li>
-    <li class="astro-ILHXCYM7">
-            <a href="/blog/" class="astro-ILHXCYM7">blog</a>
-            <span aria-hidden="true" class="astro-ILHXCYM7">&#62;</span>
-          </li><li class="astro-ILHXCYM7">
-            <a href="/tags/" class="astro-ILHXCYM7">tags</a>
-            <span aria-hidden="true" class="astro-ILHXCYM7">&#62;</span>
-          </li><li class="astro-ILHXCYM7">
-            <span class="lowercase astro-ILHXCYM7" aria-current="page">
-              
-              jvm
-            </span>
-          </li>
-  </ul>
-</nav>
-<main id="main-content" class="astro-HSP6OTUF">
-  <ul>
-      <li class="my-6"><div class="flex flex-col sm:flex-row sm:items-center"><a href="/blog/posts/notes-on-in-depth-understanding-of-virtual-machines" class="block text-lg font-medium text-skin-accent decoration-dashed underline-offset-4 focus-visible:no-underline focus-visible:underline-offset-0 sm:flex-grow"><h2 style="view-transition-name:深入理解虚拟机笔记" class="text-lg font-medium decoration-dashed hover:underline">《深入理解虚拟机》笔记</h2></a><div class="sm:ml-4 sm:shrink-0"><div class="flex items-center space-x-2 opacity-80 undefined"><svg xmlns="http://www.w3.org/2000/svg" class="scale-90 inline-block h-6 w-6 fill-skin-base" aria-hidden="true"><path d="M7 11h2v2H7zm0 4h2v2H7zm4-4h2v2h-2zm0 4h2v2h-2zm4-4h2v2h-2zm0 4h2v2h-2z"></path><path d="M5 22h14c1.103 0 2-.897 2-2V6c0-1.103-.897-2-2-2h-2V2h-2v2H9V2H7v2H5c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2zM19 8l.001 12H5V8h14z"></path></svg><span>Posted on:</span><span class="text-sm font-mono">2019-04-28</span></div></div></div><p class="text-gray-500 text-sm">记录了《深入理解虚拟机》这本书的读书笔记。</p></li>
-    </ul>
-</main><footer class="mt-auto astro-SZ7XMLTE">
-  <div class="max-w-4xl mx-auto px-0">
-  <hr class="border-skin-line" aria-hidden="true">
-</div>
-  <div class="footer-wrapper astro-SZ7XMLTE">
-    <div class="copyright-wrapper astro-SZ7XMLTE">
-      <span class="astro-SZ7XMLTE">Powered by <a href="https://github.com/satnaing/astro-paper" class="text-skin-accent decoration-dashed underline-offset-4 hover:underline astro-SZ7XMLTE">
-          Astro-Paper</a></span>
-    </div>
-  </div>
-</footer>
-  </body></html>
+<!DOCTYPE html><html dir="ltr" lang="en" class="false" data-astro-cid-sckkx6r4> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="canonical" href="https://donglin94.github.io/tags/jvm/"><meta name="generator" content="Astro v5.13.5"><link rel="stylesheet" href="https://npm.elemecdn.com/lxgw-wenkai-screen-webfont/lxgwwenkaiscreen.css"><!-- General Meta Tags --><title>Tag: jvm | DongLin&#39;s Blog</title><meta name="title" content="Tag: jvm | DongLin's Blog"><meta name="description" content="东临的博客"><meta name="author" content="东临"><link rel="sitemap" href="/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="Tag: jvm | DongLin's Blog"><meta property="og:description" content="东临的博客"><meta property="og:url" content="https://donglin94.github.io/tags/jvm/"><meta property="og:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Article Published/Modified time --><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://donglin94.github.io/tags/jvm/"><meta property="twitter:title" content="Tag: jvm | DongLin's Blog"><meta property="twitter:description" content="东临的博客"><meta property="twitter:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"Tag: jvm | DongLin's Blog","image":"https://donglin94.github.io/astropaper-og.jpg","datePublished":"undefined","author":[{"@type":"Person","name":"东临","url":"https://donglin94.github.io/"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="DongLin's Blog" href="https://donglin94.github.io/blog/rss.xml"><meta name="theme-color" content=""><meta name="astro-view-transitions-enabled" content="true"><meta name="astro-view-transitions-fallback" content="animate"><script type="module" src="/_astro/ClientRouter.astro_astro_type_script_index_0_lang.DZnDNxNb.js"></script><script src="/toggle-theme.js"></script><style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media (prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
+</style>
+<link rel="stylesheet" href="/_astro/about.CmvKnP-L.css">
+<style>:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
+</style><style>[data-astro-transition-scope="astro-7yucybdb-1"] { view-transition-name: jvm; }@layer astro { ::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-7yucybdb-1"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-7yucybdb-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-7yucybdb-1"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-7yucybdb-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-7yucybdb-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-7yucybdb-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-7yucybdb-1"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-7yucybdb-1"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-hn2qarie-2"] { view-transition-name: jvm; }@layer astro { ::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(jvm) { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-hn2qarie-2"],
+			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-hn2qarie-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-hn2qarie-2"],
+			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-hn2qarie-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-hn2qarie-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-hn2qarie-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-hn2qarie-2"],
+			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-hn2qarie-2"] { 
+	animation-duration: 180ms;
+	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
+	animation-fill-mode: both;
+	animation-name: astroFadeIn; }</style></head> <body data-astro-cid-sckkx6r4>  <header> <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
+Skip to content
+</a> <div id="nav-container" class="mx-auto flex max-w-app flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="relative flex w-full items-baseline justify-between bg-background p-4 sm:items-center sm:py-6"> <a href="/" class="absolute bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text py-1 text-xl leading-8 font-semibold whitespace-nowrap text-transparent sm:static sm:my-auto sm:text-2xl sm:leading-none"> DongLin&#39;s Blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/posts">
+Posts
+</a> </li> <li class="col-span-2"> <a href="/tags" class="active-nav">
+Tags
+</a> </li> <li class="col-span-2"> <a href="/about">
+About
+</a> </li>  <li class="col-span-1 flex items-center justify-center"> <a href="/search" class="group inline-block hover:text-accent focus-outline flex p-3 sm:p-1" aria-label="search" title="Search"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-search"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0" /><path d="M21 21l-6 -6" /></svg> <span class="sr-only">Search</span> </a> </li> <li class="col-span-1 flex items-center justify-center"> <button id="theme-btn" class="focus-outline relative size-12 p-4 sm:size-8 hover:[&>svg]:stroke-accent" title="Toggles light & dark" aria-label="auto" aria-live="polite"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute top-[50%] left-[50%] -translate-[50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg> </button> </li> </ul> </nav> </div> </div> <div class="mx-auto max-w-app px-4"> <hr class="border-border" aria-hidden="true"> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <nav class="mx-auto mt-8 mb-1 w-full max-w-app px-4" aria-label="breadcrumb"> <ul class="font-light [&>li]:inline [&>li:not(:last-child)>a]:hover:opacity-100"> <li> <a href="/" class="opacity-80">Home</a> <span aria-hidden="true" class="opacity-80">&raquo;</span> </li> <li> <a href="/tags/" class="capitalize opacity-70"> tags </a> <span aria-hidden="true">&raquo;</span> </li><li> <span class="capitalize opacity-75 lowercase" aria-current="page">  jvm </span> </li> </ul> </nav> <main data-backUrl="/" id="main-content" class="mx-auto w-full max-w-app px-4 pb-4"> <h1 class="text-2xl font-semibold sm:text-3xl"> Tag: <span data-astro-transition-scope="astro-hn2qarie-2"> jvm </span> </h1> <p class="mt-2 mb-6 italic">All the articles with the tag &quot;jvm&quot;.</p>   <ul> <li class="my-6"> <a href="/posts/notes-on-in-depth-understanding-of-virtual-machines" class="inline-block text-lg font-medium text-accent decoration-dashed underline-offset-4 focus-visible:no-underline focus-visible:underline-offset-0"> <h2 style="view-transition-name:《深入理解虚拟机》笔记" class="text-lg font-medium decoration-dashed hover:underline">《深入理解虚拟机》笔记</h2> </a> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem] scale-90"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm" datetime="2019-04-28T00:00:00.000Z">28 Apr, 2019</time> </div> <p>记录了《深入理解虚拟机》这本书的读书笔记。</p> </li> </ul>  </main> <script type="module">document.addEventListener("astro:page-load",()=>{const t=document.querySelector("#main-content")?.dataset?.backurl;t&&sessionStorage.setItem("backUrl",t)});</script>  <footer class="w-full mt-auto"> <div class="mx-auto max-w-app px-0"> <hr class="border-border" aria-hidden="true"> </div> <div class="flex flex-col items-center justify-between py-6 sm:flex-row-reverse sm:py-4"> <div class="flex-wrap justify-center gap-1 flex"> <a href="https://github.com/donglin94/astro-paper" class="group inline-block hover:text-accent p-2 hover:rotate-6 sm:p-1" title="DongLin's Blog on GitHub"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">DongLin&#39;s Blog on GitHub</span> </a><a href="./rss.xml" class="group inline-block hover:text-accent p-2 hover:rotate-6 sm:p-1" title="RSS Feed"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg> <span class="sr-only">RSS Feed</span> </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2025</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html>
