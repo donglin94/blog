@@ -1,4 +1,4 @@
-<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/blog/favicon.svg"><link rel="canonical" href="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta name="generator" content="Astro v5.16.11"><!-- 字体预连接优化 --><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><!-- Fira Code（代码字体 - 更细更优雅） --><link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet"><!-- JetBrains Mono（代码字体备选） --><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><!-- 霞鹜文楷（中文标题和正文） --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/lxgwwenkaiscreen.css"><!-- General Meta Tags --><title>DBT 数仓设计 | DongLin&#39;s Blog</title><meta name="title" content="DBT 数仓设计 | DongLin's Blog"><meta name="description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta name="author" content="gemini,东临"><link rel="sitemap" href="/blog/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="DBT 数仓设计 | DongLin's Blog"><meta property="og:description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta property="og:url" content="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta property="og:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Article Published/Modified time --><meta property="article:published_time" content="2025-07-30T00:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta property="twitter:title" content="DBT 数仓设计 | DongLin's Blog"><meta property="twitter:description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta property="twitter:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"DBT 数仓设计 | DongLin's Blog","image":"https://donglin94.github.io/astropaper-og.jpg","datePublished":"2025-07-30T00:00:00.000Z","author":[{"@type":"Person","name":"gemini,东临","url":"https://donglin94.github.io/"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="DongLin's Blog" href="https://donglin94.github.io/blog/rss.xml"><meta name="theme-color" content=""><script src="/blog/toggle-theme.js"></script><link rel="stylesheet" href="/blog/_astro/about.BJ_oTjZc.css">
+<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/blog/favicon.svg"><link rel="canonical" href="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta name="generator" content="Astro v5.16.11"><!-- 字体预连接优化 --><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><!-- Fira Code（代码字体 - 更细更优雅） --><link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet"><!-- JetBrains Mono（代码字体备选） --><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><!-- 霞鹜文楷（中文标题和正文） --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/lxgwwenkaiscreen.css"><!-- General Meta Tags --><title>DBT 数仓设计 | DongLin&#39;s Blog</title><meta name="title" content="DBT 数仓设计 | DongLin's Blog"><meta name="description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta name="author" content="gemini,东临"><link rel="sitemap" href="/blog/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="DBT 数仓设计 | DongLin's Blog"><meta property="og:description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta property="og:url" content="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta property="og:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Article Published/Modified time --><meta property="article:published_time" content="2025-07-30T00:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://donglin94.github.io/blog/posts/dbt-architecture-design/"><meta property="twitter:title" content="DBT 数仓设计 | DongLin's Blog"><meta property="twitter:description" content="一份关于如何使用 dbt 构建现代化数据仓库的综合指南，内容涵盖分层建模、数据质量保障，以及针对 Doris 的性能优化策略。"><meta property="twitter:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"DBT 数仓设计 | DongLin's Blog","image":"https://donglin94.github.io/astropaper-og.jpg","datePublished":"2025-07-30T00:00:00.000Z","author":[{"@type":"Person","name":"gemini,东临","url":"https://donglin94.github.io/"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="DongLin's Blog" href="https://donglin94.github.io/blog/rss.xml"><meta name="theme-color" content=""><script src="/blog/toggle-theme.js"></script><link rel="stylesheet" href="/blog/_astro/about.-93ZG27y.css">
 <style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
 :where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
 </style><style>[data-astro-transition-scope="astro-yb6n2ciq-1"] { view-transition-name: dbt-\6570\4ED3\8BBE\8BA1; }@layer astro { ::view-transition-old(dbt-\6570\4ED3\8BBE\8BA1) { 
@@ -155,9 +155,7 @@ Archives
 Books
 </a> </li> <li class="col-span-2"> <a href="/blog/about">
 About
-</a> </li>  </ul> </nav> </div> </div> <div class="mx-auto max-w-app px-4"> <hr class="border-border" aria-hidden="true"> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <main id="main-content" class="mx-auto w-full max-w-app px-4 py-8 pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-medium text-accent sm:text-3xl" data-astro-transition-scope="astro-yb6n2ciq-1"> DBT 数仓设计 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2025-07-30T00:00:00.000Z">2025-07-30</time> </div> <span aria-hidden="true" class="max-sm:hidden hidden">|</span>  </div>  <article id="article" class="app-prose mx-auto mt-8 max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <blockquote>
-<p>本文由 Google Gemini 生成，仅供参考。</p>
-</blockquote>
+</a> </li>  </ul> </nav> </div> </div> <div class="mx-auto max-w-app px-4"> <hr class="border-border" aria-hidden="true"> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <main id="main-content" class="mx-auto w-full max-w-app px-4 py-8 pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-medium text-accent sm:text-3xl" data-astro-transition-scope="astro-yb6n2ciq-1"> DBT 数仓设计 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2025-07-30T00:00:00.000Z">2025-07-30</time> </div> <span aria-hidden="true" class="max-sm:hidden hidden">|</span>  </div>  <article id="article" class="app-prose mx-auto mt-8 max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <blockquote><p>本文由 Google Gemini 生成，仅供参考。</p></blockquote>
 <h2 id="table-of-contents">Table of Contents</h2>
 <p></p><details><summary>Open Table of Contents</summary><p></p>
 <ul>
@@ -556,6 +554,272 @@ About
     }
   }
   attachCopyButtons();
+
+  /** Accessible image lightbox for article images. */
+  function initLightbox() {
+    const article = document.getElementById("article");
+    if (!article) return;
+
+    const prefersReducedMotion = () =>
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let overlay = null;
+    let lastFocused = null;
+
+    requestAnimationFrame(() => {
+      const images = Array.from(article.querySelectorAll("img"));
+      for (const image of images) {
+        if (image.closest("a")) continue;
+        image.setAttribute("role", "button");
+        image.setAttribute("tabindex", "0");
+        image.setAttribute("aria-haspopup", "dialog");
+        image.setAttribute(
+          "aria-label",
+          image.alt ? `Zoom image: ${image.alt}` : "Zoom image"
+        );
+      }
+    });
+
+    function open(src, alt, trigger) {
+      if (overlay) return;
+      lastFocused = trigger ?? document.activeElement;
+
+      overlay = document.createElement("div");
+      overlay.setAttribute("role", "dialog");
+      overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute(
+        "aria-label",
+        alt ? `Image preview: ${alt}` : "Image preview"
+      );
+      overlay.className =
+        "fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200 motion-reduce:transition-none";
+
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.setAttribute("aria-label", "Close image preview");
+      closeButton.className =
+        "absolute end-4 top-4 rounded p-2 text-3xl leading-none text-white";
+      closeButton.innerHTML = "&#10005;";
+      closeButton.addEventListener("click", close);
+
+      const image = document.createElement("img");
+      image.src = src;
+      image.alt = "";
+      image.className =
+        "max-h-[90dvh] max-w-[90dvw] cursor-default object-contain";
+
+      overlay.append(closeButton, image);
+      overlay.addEventListener("click", e => {
+        if (e.target === overlay && currentScale <= 1) close();
+      });
+
+      let currentScale = 1;
+      let translateX = 0;
+      let translateY = 0;
+      let initialDist = 0;
+      let initialScale = 1;
+      let panStartX = 0;
+      let panStartY = 0;
+      let panStartTranslateX = 0;
+      let panStartTranslateY = 0;
+      let lastTapTime = 0;
+
+      function applyTransform() {
+        image.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+      }
+
+      function resetTransform() {
+        currentScale = 1;
+        translateX = 0;
+        translateY = 0;
+        image.style.transform = "";
+      }
+
+      overlay.addEventListener(
+        "touchstart",
+        e => {
+          const touches = e.touches;
+          if (touches.length === 2) {
+            initialDist = Math.hypot(
+              touches[1].clientX - touches[0].clientX,
+              touches[1].clientY - touches[0].clientY
+            );
+            initialScale = currentScale;
+          } else if (touches.length === 1) {
+            const now = Date.now();
+            if (now - lastTapTime < 300) {
+              e.preventDefault();
+              if (currentScale > 1) {
+                resetTransform();
+              } else {
+                currentScale = 2;
+                translateX = 0;
+                translateY = 0;
+                applyTransform();
+              }
+              lastTapTime = 0;
+              panStartX = touches[0].clientX;
+              panStartY = touches[0].clientY;
+              panStartTranslateX = translateX;
+              panStartTranslateY = translateY;
+            } else {
+              lastTapTime = now;
+              if (currentScale > 1) {
+                panStartX = touches[0].clientX;
+                panStartY = touches[0].clientY;
+                panStartTranslateX = translateX;
+                panStartTranslateY = translateY;
+              }
+            }
+          }
+        },
+        { passive: false }
+      );
+
+      overlay.addEventListener(
+        "touchmove",
+        e => {
+          const touches = e.touches;
+          if (touches.length === 2) {
+            e.preventDefault();
+            const dist = Math.hypot(
+              touches[1].clientX - touches[0].clientX,
+              touches[1].clientY - touches[0].clientY
+            );
+            currentScale = Math.min(
+              4,
+              Math.max(1, initialScale * (dist / initialDist))
+            );
+            applyTransform();
+          } else if (touches.length === 1) {
+            if (currentScale > 1) {
+              e.preventDefault();
+              translateX =
+                panStartTranslateX +
+                (touches[0].clientX - panStartX) / currentScale;
+              translateY =
+                panStartTranslateY +
+                (touches[0].clientY - panStartY) / currentScale;
+              const maxX = Math.max(
+                0,
+                (image.clientWidth - overlay.clientWidth / currentScale) / 2
+              );
+              const maxY = Math.max(
+                0,
+                (image.clientHeight - overlay.clientHeight / currentScale) / 2
+              );
+              translateX = Math.min(maxX, Math.max(-maxX, translateX));
+              translateY = Math.min(maxY, Math.max(-maxY, translateY));
+              applyTransform();
+            } else {
+              e.preventDefault();
+            }
+          }
+        },
+        { passive: false }
+      );
+
+      overlay.addEventListener("touchend", e => {
+        if (e.touches.length === 0 && currentScale <= 1.05) {
+          resetTransform();
+        }
+      });
+
+      overlay.addEventListener("touchcancel", e => {
+        if (e.touches.length === 0 && currentScale <= 1.05) {
+          resetTransform();
+        }
+      });
+
+      document.body.appendChild(overlay);
+      document.body.style.overflow = "hidden";
+      document.addEventListener("keydown", onKeyDown);
+      window.__closeLightbox = close;
+
+      requestAnimationFrame(() => overlay?.classList.add("opacity-100"));
+      closeButton.focus();
+    }
+
+    function close() {
+      if (!overlay) return;
+      const el = overlay;
+      overlay = null;
+      window.__closeLightbox = null;
+
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "";
+      lastFocused?.focus();
+      lastFocused = null;
+
+      if (prefersReducedMotion()) {
+        el.remove();
+        return;
+      }
+      const remove = () => el.remove();
+      el.addEventListener("transitionend", remove, { once: true });
+      setTimeout(remove, 250);
+      el.classList.remove("opacity-100");
+    }
+
+    function onKeyDown(e) {
+      if (e.key === "Escape") {
+        close();
+      } else if (e.key === "Tab") {
+        trapFocus(e);
+      }
+    }
+
+    function trapFocus(e) {
+      if (!overlay) return;
+      const focusables = overlay.querySelectorAll(
+        'a[href], button, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
+    function triggerFromEvent(e) {
+      if (!(e.target instanceof Element)) return null;
+      const image = e.target.closest("img");
+      if (!image || !article.contains(image) || image.closest("a")) return null;
+      return image;
+    }
+
+    function activate(image) {
+      open(image.currentSrc || image.src, image.alt, image);
+    }
+
+    article.addEventListener("click", e => {
+      const image = triggerFromEvent(e);
+      if (!image) return;
+      e.preventDefault();
+      activate(image);
+    });
+
+    article.addEventListener("keydown", e => {
+      if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+      const image = triggerFromEvent(e);
+      if (!image) return;
+      e.preventDefault();
+      activate(image);
+    });
+  }
+  initLightbox();
+
+  if (!window.__lightboxSwapBound) {
+    window.__lightboxSwapBound = true;
+    document.addEventListener("astro:before-swap", () =>
+      window.__closeLightbox?.()
+    );
+  }
 
   /* Go to page start after page swap */
   document.addEventListener("astro:after-swap", () =>
