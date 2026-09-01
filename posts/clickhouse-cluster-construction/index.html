@@ -1,661 +1,121 @@
-<!DOCTYPE html><html dir="ltr" lang="en" class="scroll-smooth"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/blog/favicon.svg"><link rel="canonical" href="https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"><meta name="generator" content="Astro v5.16.11"><!-- 字体预连接优化 --><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><!-- Fira Code（代码字体 - 更细更优雅） --><link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500&display=swap" rel="stylesheet"><!-- JetBrains Mono（代码字体备选） --><link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><!-- 霞鹜文楷（中文标题和正文） --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/lxgwwenkaiscreen.css"><!-- General Meta Tags --><title>ClickHouse 集群搭建 | DongLin&#39;s Blog</title><meta name="title" content="ClickHouse 集群搭建 | DongLin's Blog"><meta name="description" content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><meta name="author" content="东临"><link rel="sitemap" href="/blog/sitemap-index.xml"><!-- Open Graph / Facebook --><meta property="og:title" content="ClickHouse 集群搭建 | DongLin's Blog"><meta property="og:description" content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><meta property="og:url" content="https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"><meta property="og:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Article Published/Modified time --><meta property="article:published_time" content="2021-06-21T00:00:00.000Z"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"><meta property="twitter:title" content="ClickHouse 集群搭建 | DongLin's Blog"><meta property="twitter:description" content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><meta property="twitter:image" content="https://donglin94.github.io/astropaper-og.jpg"><!-- Google JSON-LD Structured data --><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","headline":"ClickHouse 集群搭建 | DongLin's Blog","image":"https://donglin94.github.io/astropaper-og.jpg","datePublished":"2021-06-21T00:00:00.000Z","author":[{"@type":"Person","name":"东临","url":"https://donglin94.github.io/"}]}</script><!-- Enable RSS feed auto-discovery  --><!-- https://docs.astro.build/en/recipes/rss/#enabling-rss-feed-auto-discovery --><link rel="alternate" type="application/rss+xml" title="DongLin's Blog" href="https://donglin94.github.io/blog/rss.xml"><meta name="theme-color" content=""><script src="/blog/toggle-theme.js"></script><link rel="stylesheet" href="/blog/_astro/about.-93ZG27y.css">
-<style>@keyframes astroFadeInOut{0%{opacity:1}to{opacity:0}}@keyframes astroFadeIn{0%{opacity:0;mix-blend-mode:plus-lighter}to{opacity:1;mix-blend-mode:plus-lighter}}@keyframes astroFadeOut{0%{opacity:1;mix-blend-mode:plus-lighter}to{opacity:0;mix-blend-mode:plus-lighter}}@keyframes astroSlideFromRight{0%{transform:translate(100%)}}@keyframes astroSlideFromLeft{0%{transform:translate(-100%)}}@keyframes astroSlideToRight{to{transform:translate(100%)}}@keyframes astroSlideToLeft{to{transform:translate(-100%)}}@media(prefers-reduced-motion){::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}[data-astro-transition-scope]{animation:none!important}}
-:where([data-astro-image]){object-fit:var(--fit);object-position:var(--pos);height:auto}:where([data-astro-image=full-width]){width:100%}:where([data-astro-image=constrained]){max-width:100%}
-</style><style>[data-astro-transition-scope="astro-yb6n2ciq-1"] { view-transition-name: click-house-\96C6\7FA4\642D\5EFA; }@layer astro { ::view-transition-old(click-house-\96C6\7FA4\642D\5EFA) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }::view-transition-new(click-house-\96C6\7FA4\642D\5EFA) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(click-house-\96C6\7FA4\642D\5EFA) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(click-house-\96C6\7FA4\642D\5EFA) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
-			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
-			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
-			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-yb6n2ciq-1"],
-			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-yb6n2ciq-1"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }</style><style>[data-astro-transition-scope="astro-36ssibgs-2"] { view-transition-name: click-house; }@layer astro { ::view-transition-old(click-house) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }::view-transition-new(click-house) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }[data-astro-transition=back]::view-transition-old(click-house) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition=back]::view-transition-new(click-house) { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; } }[data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
-			[data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
-			[data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }[data-astro-transition=back][data-astro-transition-fallback="old"] [data-astro-transition-scope="astro-36ssibgs-2"],
-			[data-astro-transition=back][data-astro-transition-fallback="old"][data-astro-transition-scope="astro-36ssibgs-2"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeOut; }[data-astro-transition=back][data-astro-transition-fallback="new"] [data-astro-transition-scope="astro-36ssibgs-2"],
-			[data-astro-transition=back][data-astro-transition-fallback="new"][data-astro-transition-scope="astro-36ssibgs-2"] { 
-	animation-duration: 180ms;
-	animation-timing-function: cubic-bezier(0.76, 0, 0.24, 1);
-	animation-fill-mode: both;
-	animation-name: astroFadeIn; }</style></head> <body>  <header> <a id="skip-to-content" href="#main-content" class="absolute start-16 -top-full z-50 bg-background px-3 py-2 text-accent backdrop-blur-lg transition-all focus:top-4">
-Skip to content
-</a> <div id="nav-container" class="mx-auto flex max-w-app flex-col items-center justify-between sm:flex-row"> <div id="top-nav-wrap" class="relative flex w-full items-baseline justify-between bg-background p-4 sm:items-center sm:py-6"> <a href="/blog/" class="absolute bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text py-1 text-xl leading-8 font-semibold whitespace-nowrap text-transparent sm:static sm:my-auto sm:text-2xl sm:leading-none"> DongLin&#39;s Blog </a> <nav id="nav-menu" class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"> <button id="menu-btn" class="focus-outline self-end p-2 sm:hidden" aria-label="Open Menu" aria-expanded="false" aria-controls="menu-items"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden" id="close-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-menu-deep" id="menu-icon"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 6h16" /><path d="M7 12h13" /><path d="M10 18h10" /></svg> </button> <ul id="menu-items" class="mt-4 grid w-44 grid-cols-2 place-content-center gap-2 [&#38;>li>a]:block [&#38;>li>a]:px-4 [&#38;>li>a]:py-3 [&#38;>li>a]:text-center [&#38;>li>a]:font-medium [&#38;>li>a]:hover:text-accent sm:[&#38;>li>a]:px-2 sm:[&#38;>li>a]:py-1 hidden sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0"> <li class="col-span-2"> <a href="/blog/tags">
-Tags
-</a> </li> <li class="col-span-2"> <a href="/blog/archives">
-Archives
-</a> </li> <li class="col-span-2"> <a href="/blog/books">
-Books
-</a> </li> <li class="col-span-2"> <a href="/blog/about">
-About
-</a> </li>  </ul> </nav> </div> </div> <div class="mx-auto max-w-app px-4"> <hr class="border-border" aria-hidden="true"> </div> </header> <script type="module">function s(){const e=document.querySelector("#menu-btn"),t=document.querySelector("#menu-items"),n=document.querySelector("#menu-icon"),o=document.querySelector("#close-icon");!e||!t||!n||!o||e.addEventListener("click",()=>{const c=e.getAttribute("aria-expanded")==="true";e.setAttribute("aria-expanded",c?"false":"true"),e.setAttribute("aria-label",c?"Open Menu":"Close Menu"),t.classList.toggle("hidden"),n.classList.toggle("hidden"),o.classList.toggle("hidden")})}s();document.addEventListener("astro:after-swap",s);</script> <main id="main-content" class="mx-auto w-full max-w-app px-4 py-8 pb-12" data-pagefind-body> <h1 class="inline-block text-2xl font-medium text-accent sm:text-3xl" data-astro-transition-scope="astro-yb6n2ciq-1"> ClickHouse 集群搭建 </h1> <div class="my-2 flex items-center gap-2"> <div class="flex items-center gap-x-2 opacity-80"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 min-w-[1.375rem]"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M7 14h.013" /><path d="M10.01 14h.005" /><path d="M13.01 14h.005" /><path d="M16.015 14h.005" /><path d="M13.015 17h.005" /><path d="M7.01 17h.005" /><path d="M10.01 17h.005" /></svg>  <time class="text-sm sm:text-base" datetime="2021-06-21T00:00:00.000Z">2021-06-21</time> </div> <span aria-hidden="true" class="max-sm:hidden hidden">|</span>  </div>  <article id="article" class="app-prose mx-auto mt-8 max-w-app prose-pre:bg-(--shiki-light-bg) dark:prose-pre:bg-(--shiki-dark-bg)"> <h2 id="人群圈选业务痛点">人群圈选业务痛点</h2>
-<ul>
-<li>用户标签多、标签丰富，标签列可达成百甚至上千列。</li>
-<li>数据量庞大，用户数多，从而所需运算量也极大。</li>
-<li>圈选条件组合多样化，没有固定索引可以优化，存储空间占用极大。</li>
-<li>性能要求高，圈选结果要求及时响应，过长的延时会造成营销人群的不准确。</li>
-<li>数据更新时效要求高，用户画像要求近实时的更新，过期的人群信息也将直接影响圈选的精准性。<!-- more --></li>
-</ul>
-<h2 id="clickhouse-特性">ClickHouse 特性</h2>
-<ul>
-<li>优势
-<ol>
-<li>查询速度快</li>
-<li>存储压缩率高，节省空间</li>
-<li>架构简单，集群中所有节点功能相同，规避单点故障</li>
-<li>社区活跃，应用广泛，产品成熟度高</li>
-</ol>
-</li>
-<li>不足
-<ol>
-<li>不支持事务、异步删除与更新</li>
-<li>不适合高并发场景</li>
-<li>不支持标准 sql，JOIN 由内部实现</li>
-<li>集群在线扩容支持不佳，运维成本高</li>
-</ol>
-</li>
-</ul>
-<h2 id="下载安装包">下载安装包</h2>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="shell"><code><span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">sudo</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> yum</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> install</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> yum-utils</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">sudo</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> rpm</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> --import</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> https://repo.clickhouse.tech/CLICKHOUSE-KEY.GPG</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">sudo</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> yum-config-manager</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> --add-repo</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> https://repo.clickhouse.tech/rpm/clickhouse.repo</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">sudo</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> yum</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> install</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> clickhouse-server</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> clickhouse-client</span></span></code></pre>
-<h2 id="文件目录">文件目录</h2>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="shell"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 默认数据存储路径</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">/var/lib/clickhouse</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 默认日志路径</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">/var/log/clickhouse-server</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 服务端配置文件路径</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">/etc/clickhouse-server</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 核心配置文件详解：https://www.e-learn.cn/topic/4050968</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">/etc/clickhouse-server/config.xml</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 客户端配置文件路径</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">/etc/clickhouse-client</span></span></code></pre>
-<h2 id="命令">命令</h2>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="shell"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 服务端命令</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">service</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> clickhouse-server</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> start</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> |</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> status</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> |</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> restart</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> |</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> stop</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 调试，日志打印在控制台</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">sudo</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> -u</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> clickhouse</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> /usr/bin/clickhouse-server</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> --config-file</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF"> /etc/clickhouse-server/config.xml</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D"># 启动客户端</span></span>
-<span class="line"><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0">clickhouse-client</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> --port</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> 9003</span></span></code></pre>
-<h2 id="集群部署">集群部署</h2>
-<ol>
-<li>
-<p>在群集的所有机器上安装 ClickHouse 服务端</p>
-</li>
-<li>
-<p>在配置文件中设置群集配置</p>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="html"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">&#x3C;!--config.xml配置--></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">tcp_port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>9003&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">tcp_port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">listen_host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>::&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">listen_host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">&#x3C;!--incl属性表示可从外部文件中获取节点名--></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">remote_servers</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> incl</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"clickhouse_remote_servers"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> /></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">zookeeper</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> incl</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"zookeeper-servers"</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> optional</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"true"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> /></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">macros</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> incl</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"macros"</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> optional</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"true"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> /></span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">&#x3C;!--使用外部扩展配置文件--></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">include_from</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>/etc/clickhouse-server/metrika.xml&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">include_from</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">&#x3C;!--metrika.xml配置--></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">yandex</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">  &#x3C;!-- 集群配置 --></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">clickhouse_remote_servers</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">ck_cluster</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">shard</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker07&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>9003&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker08&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>9003&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker09&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">          &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>9003&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">        &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">shard</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">ck_cluster</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">clickhouse_remote_servers</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">  &#x3C;!--zookeeper相关配置--></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;</span><span style="--shiki-light:#85E89D;--shiki-dark:#85E89D">zookeeper-servers</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> index</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"3"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>master01&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>2181&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> index</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"2"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker01&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>2181&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> index</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"1"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker02&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>2181&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> index</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"5"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker03&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>2181&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> index</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">=</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">"4"</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker04&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">host</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">      &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>2181&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">port</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">node</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;/</span><span style="--shiki-light:#85E89D;--shiki-dark:#85E89D">zookeeper-servers</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">  &#x3C;!--环境变量 --></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">macros</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">shard</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>0&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">shard</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">    &#x3C;</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">>worker07&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">replica</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">  &#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">macros</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">&#x3C;/</span><span style="--shiki-light:#FDAEB7;--shiki-light-font-style:italic;--shiki-dark:#FDAEB7;--shiki-dark-font-style:italic">yandex</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">></span></span></code></pre>
-</li>
-<li>
-<p>分发配置，其自动生效，查看集群</p>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">select</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> *</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> from</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF"> system</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">clusters</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">;</span></span></code></pre>
-</li>
-</ol>
-<h2 id="一致性">一致性</h2>
-<p>internal_replication：表示是否只将数据写入其中一个副本，默认为 false</p>
-<p>四种复制模式：</p>
-<ul>
-<li>非复制表，internal_replication=false。写入单机表时，不同服务器查询结果不同；插入到分布式表中的数据被插入到两个本地表中，如果在插入期间没有问题，则两个本地表上的数据保持同步。我们称之为“穷人的复制”，因为复制在网络出现问题的情况下容易发生分歧，没有一个简单的方法来确定哪一个是正确的复制。</li>
-<li>非复制表，internal_replication=true。数据只被插入到一个本地表中，但没有任何机制可以将它转移到另一个表中。因此，在不同主机上的本地表看到了不同的数据，查询分布式表时会出现非预期的数据。显然，这是配置 ClickHouse 集群的一种不正确的方法。</li>
-<li>复制表，internal_replication=true。插入到分布式表中的数据仅插入到其中一个本地表中，但通过复制机制传输到另一个主机上的表中。因此两个本地表上的数据保持同步。这是官方推荐配置。</li>
-<li>复制表，internal_replication=false。数据被插入到两个本地表中，但同时复制表的机制保证重复数据会被删除。数据会从插入的第一个节点复制到其它的节点。其它节点拿到数据后如果发现数据重复，数据会被丢弃。这种情况下，虽然复制保持同步，没有错误发生。但由于不断的重复复制流，会导致写入性能明显的下降。所以这种配置实际应该是避免的。</li>
-</ul>
-<h2 id="优化">优化</h2>
-<ol>
-<li>读的时候是用 distribution 表去读取数据，轮询写入本地表</li>
-<li>写入时尽量“大批量，少批次”写入</li>
-<li>尽量使用大宽表代替 join，列宽支持 1w+</li>
-</ol>
-<h2 id="集群测试">集群测试</h2>
-<pre class="astro-code astro-code-themes github-dark github-dark" style="--shiki-light:#e1e4e8;--shiki-dark:#e1e4e8;--shiki-light-bg:#24292e;--shiki-dark-bg:#24292e; overflow-x: auto;--file-name-offset: -0.75rem;" tabindex="0" data-language="sql"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 先创建本地表，再创建分布式表，往分布式表插入数据，数据随机分布在本地表</span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 在每个实例上创建本地表</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">CREATE</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> TABLE</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster3s1r_local(</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`id`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> Int32,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`website`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> String,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`wechat`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> String,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`FlightDate`</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> Date</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> UInt16) ENGINE </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">=</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> MergeTree(FlightDate, (</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">, FlightDate), </span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">8192</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 创建一个分布式表(指定集群名、数据库名、数据表名、分片KEY)</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">CREATE</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> TABLE</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster3s1r_all </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">AS</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> cluster3s1r_local ENGINE </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">=</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> Distributed</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(ck_cluster, </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">, cluster3s1r_local, </span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">rand</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">());</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 插入测试数据</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">INSERT INTO</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster3s1r_all</span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(id,website,wechat,FlightDate,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">)</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">values</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">1</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'https://niocoder.com/'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'java干货'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'2020-11-28'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">2020</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">INSERT INTO</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster3s1r_all (id,website,wechat,FlightDate,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">)</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">values</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">2</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'http://www.merryyou.cn/'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'javaganhuo'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'2020-11-28'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">2020</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">INSERT INTO</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster3s1r_all (id,website,wechat,FlightDate,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">)</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">values</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">3</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'http://www.xxxxx.cn/'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'xxxxx'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'2020-11-28'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">2020</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 查询分布式表</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">select</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> *</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> from</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> cluster3s1r_all;</span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 查询本地表</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">select</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> *</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> from</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> cluster3s1r_local;</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 创建复制表，连接zk，不用创建分布式表，不配置集群clickhouse_remote_servers。数据写入本地表，其他节点自动同步数据</span></span>
-<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D">-- 创建复制表</span></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">CREATE</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> TABLE</span><span style="--shiki-light:#B392F0;--shiki-dark:#B392F0"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster1s3r_local </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">on</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> cluster ck_cluster (</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`id`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> Int32,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`website`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> String,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`wechat`</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> String,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">`FlightDate`</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> Date</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> UInt16) ENGINE </span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">=</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> ReplicatedMergeTree(</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'/clickhouse/tables/{shard}/cluster1s3r_local'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">, </span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'{replica}'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">, FlightDate, (</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">, FlightDate), </span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">8192</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">INSERT INTO</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> default</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">.cluster1s3r_all</span></span>
-<span class="line"><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(id,website,wechat,FlightDate,</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">Year</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">)</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583">values</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">(</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">1</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'https://niocoder.com/'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'java干货'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#9ECBFF;--shiki-dark:#9ECBFF">'2020-11-28'</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">,</span><span style="--shiki-light:#79B8FF;--shiki-dark:#79B8FF">2020</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8">);</span></span>
-<span class="line"></span>
-<span class="line"><span style="--shiki-light:#F97583;--shiki-dark:#F97583">select</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> *</span><span style="--shiki-light:#F97583;--shiki-dark:#F97583"> from</span><span style="--shiki-light:#E1E4E8;--shiki-dark:#E1E4E8"> cluster1s3r_all;</span></span></code></pre>
-<h2 id="问题">问题</h2>
-<ol>
-<li>
-<p>DB::Exception: Effective user of the process (root) does not match the owner of the data (clickhouse). Run under ‘sudo -u clickhouse’.</p>
-<p>sudo -u clickhouse clickhouse-server —config-file=/etc/clickhouse-server/config.xml</p>
-</li>
-<li>
-<p>Access to file denied: /var/log/clickhouse-server/clickhouse-server.log</p>
-<p>chown -R clickhouse /var/log/clickhouse-server/</p>
-</li>
-<li>
-<p>Address already in use</p>
-<p>更改 tcp 配置，切换 9000 端口为 9003</p>
-</li>
-<li>
-<p>There are two exactly the same ClickHouse instances</p>
-<p>单台节点只能部署一个分片副本，即 3 分片 2 副本需要 6 台服务器</p>
-</li>
-</ol> </article>  <ul class="mt-4 mb-8 sm:my-8"> <li class="group inline-block group-hover:cursor-pointer my-1 underline-offset-4"> <a href="/blog/tags/click-house/" class="relative pe-2 text-lg underline decoration-dashed group-hover:-top-0.5 group-hover:text-accent focus-visible:p-1 focus-visible:no-underline text-sm" data-astro-transition-scope="astro-36ssibgs-2"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block opacity-80 -me-2.5 size-4"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 9l14 0" /><path d="M5 15l14 0" /><path d="M11 4l-4 16" /><path d="M17 4l-4 16" /></svg>
-&nbsp;&nbsp;<span>ClickHouse</span> </a> </li> </ul> </main> <footer class="w-full mt-auto"> <div class="mx-auto max-w-app px-0"> <hr class="border-border" aria-hidden="true"> </div> <div class="flex flex-col items-center justify-between py-6 sm:flex-row-reverse sm:py-4"> <div class="flex-wrap justify-center gap-1 flex"> <a href="https://github.com/donglin94" class="group inline-block hover:text-accent p-2 hover:rotate-6 sm:p-1" title="donglin94 on GitHub"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg> <span class="sr-only">donglin94 on GitHub</span> </a><a href="/blog/rss.xml" class="group inline-block hover:text-accent p-2 hover:rotate-6 sm:p-1" title="RSS Feed"> <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 group-hover:fill-transparent sm:scale-110"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg> <span class="sr-only">RSS Feed</span> </a> </div> <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row"> <span>Copyright &#169; 2026</span> <span class="hidden sm:inline">&nbsp;|&nbsp;</span> <span>All rights reserved.</span> </div> </div> </footer>  </body></html> <script data-astro-rerun>
-  /** Create a progress indicator
-   *  at the top */
-  function createProgressBar() {
-    // Create the main container div
-    const progressContainer = document.createElement("div");
-    progressContainer.className =
-      "progress-container fixed top-0 z-10 h-1 w-full bg-background";
-
-    // Create the progress bar div
-    const progressBar = document.createElement("div");
-    progressBar.className = "progress-bar h-1 w-0 bg-accent";
-    progressBar.id = "myBar";
-
-    // Append the progress bar to the progress container
-    progressContainer.appendChild(progressBar);
-
-    // Append the progress container to the document body or any other desired parent element
-    document.body.appendChild(progressContainer);
-  }
-  createProgressBar();
-
-  /** Update the progress bar
-   *  when user scrolls */
-  function updateScrollProgress() {
-    document.addEventListener("scroll", () => {
-      const winScroll =
-        document.body.scrollTop || document.documentElement.scrollTop;
-      const height =
-        document.documentElement.scrollHeight -
-        document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      if (document) {
-        const myBar = document.getElementById("myBar");
-        if (myBar) {
-          myBar.style.width = scrolled + "%";
-        }
-      }
-    });
-  }
-  updateScrollProgress();
-
-  /** Attaches links to headings in the document,
-   *  allowing sharing of sections easily */
-  function addHeadingLinks() {
-    const headings = Array.from(
-      document.querySelectorAll("h2, h3, h4, h5, h6")
-    );
-    for (const heading of headings) {
-      heading.classList.add("group");
-      const link = document.createElement("a");
-      link.className =
-        "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
-      link.href = "#" + heading.id;
-
-      const span = document.createElement("span");
-      span.ariaHidden = "true";
-      span.innerText = "#";
-      link.appendChild(span);
-      heading.appendChild(link);
-    }
-  }
-  addHeadingLinks();
-
-  /** Attaches copy buttons to code blocks in the document,
-   * allowing users to copy code easily. */
-  function attachCopyButtons() {
-    const copyButtonLabel = "Copy";
-    const codeBlocks = Array.from(document.querySelectorAll("pre"));
-
-    for (const codeBlock of codeBlocks) {
-      const wrapper = document.createElement("div");
-      wrapper.style.position = "relative";
-
-      // Check if --file-name-offset custom property exists
-      const computedStyle = getComputedStyle(codeBlock);
-      const hasFileNameOffset =
-        computedStyle.getPropertyValue("--file-name-offset").trim() !== "";
-
-      // Determine the top positioning class
-      const topClass = hasFileNameOffset
-        ? "top-(--file-name-offset)"
-        : "-top-3";
-
-      const copyButton = document.createElement("button");
-      copyButton.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
-      copyButton.innerHTML = copyButtonLabel;
-      codeBlock.setAttribute("tabindex", "0");
-      codeBlock.appendChild(copyButton);
-
-      // wrap codebock with relative parent element
-      codeBlock?.parentNode?.insertBefore(wrapper, codeBlock);
-      wrapper.appendChild(codeBlock);
-
-      copyButton.addEventListener("click", async () => {
-        await copyCode(codeBlock, copyButton);
-      });
-    }
-
-    async function copyCode(block, button) {
-      const code = block.querySelector("code");
-      const text = code?.innerText;
-
-      await navigator.clipboard.writeText(text ?? "");
-
-      // visual feedback that task is completed
-      button.innerText = "Copied";
-
-      setTimeout(() => {
-        button.innerText = copyButtonLabel;
-      }, 700);
-    }
-  }
-  attachCopyButtons();
-
-  /** Accessible image lightbox for article images. */
-  function initLightbox() {
-    const article = document.getElementById("article");
-    if (!article) return;
-
-    const prefersReducedMotion = () =>
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    let overlay = null;
-    let lastFocused = null;
-
-    requestAnimationFrame(() => {
-      const images = Array.from(article.querySelectorAll("img"));
-      for (const image of images) {
-        if (image.closest("a")) continue;
-        image.setAttribute("role", "button");
-        image.setAttribute("tabindex", "0");
-        image.setAttribute("aria-haspopup", "dialog");
-        image.setAttribute(
-          "aria-label",
-          image.alt ? `Zoom image: ${image.alt}` : "Zoom image"
-        );
-      }
-    });
-
-    function open(src, alt, trigger) {
-      if (overlay) return;
-      lastFocused = trigger ?? document.activeElement;
-
-      overlay = document.createElement("div");
-      overlay.setAttribute("role", "dialog");
-      overlay.setAttribute("aria-modal", "true");
-      overlay.setAttribute(
-        "aria-label",
-        alt ? `Image preview: ${alt}` : "Image preview"
-      );
-      overlay.className =
-        "fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200 motion-reduce:transition-none";
-
-      const closeButton = document.createElement("button");
-      closeButton.type = "button";
-      closeButton.setAttribute("aria-label", "Close image preview");
-      closeButton.className =
-        "absolute end-4 top-4 rounded p-2 text-3xl leading-none text-white";
-      closeButton.innerHTML = "&#10005;";
-      closeButton.addEventListener("click", close);
-
-      const image = document.createElement("img");
-      image.src = src;
-      image.alt = "";
-      image.className =
-        "max-h-[90dvh] max-w-[90dvw] cursor-default object-contain";
-
-      overlay.append(closeButton, image);
-      overlay.addEventListener("click", e => {
-        if (e.target === overlay && currentScale <= 1) close();
-      });
-
-      let currentScale = 1;
-      let translateX = 0;
-      let translateY = 0;
-      let initialDist = 0;
-      let initialScale = 1;
-      let panStartX = 0;
-      let panStartY = 0;
-      let panStartTranslateX = 0;
-      let panStartTranslateY = 0;
-      let lastTapTime = 0;
-
-      function applyTransform() {
-        image.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
-      }
-
-      function resetTransform() {
-        currentScale = 1;
-        translateX = 0;
-        translateY = 0;
-        image.style.transform = "";
-      }
-
-      overlay.addEventListener(
-        "touchstart",
-        e => {
-          const touches = e.touches;
-          if (touches.length === 2) {
-            initialDist = Math.hypot(
-              touches[1].clientX - touches[0].clientX,
-              touches[1].clientY - touches[0].clientY
-            );
-            initialScale = currentScale;
-          } else if (touches.length === 1) {
-            const now = Date.now();
-            if (now - lastTapTime < 300) {
-              e.preventDefault();
-              if (currentScale > 1) {
-                resetTransform();
-              } else {
-                currentScale = 2;
-                translateX = 0;
-                translateY = 0;
-                applyTransform();
-              }
-              lastTapTime = 0;
-              panStartX = touches[0].clientX;
-              panStartY = touches[0].clientY;
-              panStartTranslateX = translateX;
-              panStartTranslateY = translateY;
-            } else {
-              lastTapTime = now;
-              if (currentScale > 1) {
-                panStartX = touches[0].clientX;
-                panStartY = touches[0].clientY;
-                panStartTranslateX = translateX;
-                panStartTranslateY = translateY;
-              }
-            }
-          }
-        },
-        { passive: false }
-      );
-
-      overlay.addEventListener(
-        "touchmove",
-        e => {
-          const touches = e.touches;
-          if (touches.length === 2) {
-            e.preventDefault();
-            const dist = Math.hypot(
-              touches[1].clientX - touches[0].clientX,
-              touches[1].clientY - touches[0].clientY
-            );
-            currentScale = Math.min(
-              4,
-              Math.max(1, initialScale * (dist / initialDist))
-            );
-            applyTransform();
-          } else if (touches.length === 1) {
-            if (currentScale > 1) {
-              e.preventDefault();
-              translateX =
-                panStartTranslateX +
-                (touches[0].clientX - panStartX) / currentScale;
-              translateY =
-                panStartTranslateY +
-                (touches[0].clientY - panStartY) / currentScale;
-              const maxX = Math.max(
-                0,
-                (image.clientWidth - overlay.clientWidth / currentScale) / 2
-              );
-              const maxY = Math.max(
-                0,
-                (image.clientHeight - overlay.clientHeight / currentScale) / 2
-              );
-              translateX = Math.min(maxX, Math.max(-maxX, translateX));
-              translateY = Math.min(maxY, Math.max(-maxY, translateY));
-              applyTransform();
-            } else {
-              e.preventDefault();
-            }
-          }
-        },
-        { passive: false }
-      );
-
-      overlay.addEventListener("touchend", e => {
-        if (e.touches.length === 0 && currentScale <= 1.05) {
-          resetTransform();
-        }
-      });
-
-      overlay.addEventListener("touchcancel", e => {
-        if (e.touches.length === 0 && currentScale <= 1.05) {
-          resetTransform();
-        }
-      });
-
-      document.body.appendChild(overlay);
-      document.body.style.overflow = "hidden";
-      document.addEventListener("keydown", onKeyDown);
-      window.__closeLightbox = close;
-
-      requestAnimationFrame(() => overlay?.classList.add("opacity-100"));
-      closeButton.focus();
-    }
-
-    function close() {
-      if (!overlay) return;
-      const el = overlay;
-      overlay = null;
-      window.__closeLightbox = null;
-
-      document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
-      lastFocused?.focus();
-      lastFocused = null;
-
-      if (prefersReducedMotion()) {
-        el.remove();
-        return;
-      }
-      const remove = () => el.remove();
-      el.addEventListener("transitionend", remove, { once: true });
-      setTimeout(remove, 250);
-      el.classList.remove("opacity-100");
-    }
-
-    function onKeyDown(e) {
-      if (e.key === "Escape") {
-        close();
-      } else if (e.key === "Tab") {
-        trapFocus(e);
-      }
-    }
-
-    function trapFocus(e) {
-      if (!overlay) return;
-      const focusables = overlay.querySelectorAll(
-        'a[href], button, [tabindex]:not([tabindex="-1"])'
-      );
-      if (focusables.length === 0) return;
-      const first = focusables[0];
-      const last = focusables[focusables.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    }
-
-    function triggerFromEvent(e) {
-      if (!(e.target instanceof Element)) return null;
-      const image = e.target.closest("img");
-      if (!image || !article.contains(image) || image.closest("a")) return null;
-      return image;
-    }
-
-    function activate(image) {
-      open(image.currentSrc || image.src, image.alt, image);
-    }
-
-    article.addEventListener("click", e => {
-      const image = triggerFromEvent(e);
-      if (!image) return;
-      e.preventDefault();
-      activate(image);
-    });
-
-    article.addEventListener("keydown", e => {
-      if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
-      const image = triggerFromEvent(e);
-      if (!image) return;
-      e.preventDefault();
-      activate(image);
-    });
-  }
-  initLightbox();
-
-  if (!window.__lightboxSwapBound) {
-    window.__lightboxSwapBound = true;
-    document.addEventListener("astro:before-swap", () =>
-      window.__closeLightbox?.()
-    );
-  }
-
-  /* Go to page start after page swap */
-  document.addEventListener("astro:after-swap", () =>
-    window.scrollTo({ left: 0, top: 0, behavior: "instant" })
-  );
-</script>
+<!doctype html><html lang=en dir=auto><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no"><meta name=robots content="index, follow"><title>ClickHouse 集群搭建 | DongLin's Blog</title><meta name=keywords content="ClickHouse"><meta name=description content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><meta name=author content="东临"><link rel=canonical href=https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/><link crossorigin=anonymous href=/blog/assets/css/stylesheet.css rel="preload stylesheet" as=style><script defer crossorigin=anonymous src=/blog/assets/js/highlight.js onload=hljs.initHighlightingOnLoad()></script>
+<link rel=icon href=https://donglin94.github.io/blog/favicon.svg><link rel=icon type=image/png sizes=16x16 href=https://donglin94.github.io/blog/favicon.svg><link rel=icon type=image/png sizes=32x32 href=https://donglin94.github.io/blog/favicon.svg><link rel=apple-touch-icon href=https://donglin94.github.io/blog/favicon.svg><link rel=mask-icon href=https://donglin94.github.io/blog/favicon.svg><meta name=theme-color content="#2e2e33"><meta name=msapplication-TileColor content="#2e2e33"><noscript><style>#theme-toggle,.top-link{display:none}</style></noscript><meta property="og:title" content="ClickHouse 集群搭建"><meta property="og:description" content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><meta property="og:type" content="article"><meta property="og:url" content="https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2021-06-21T00:00:00+00:00"><meta property="article:modified_time" content="2021-06-21T00:00:00+00:00"><meta property="og:site_name" content="DongLin's Blog"><meta name=twitter:card content="summary"><meta name=twitter:title content="ClickHouse 集群搭建"><meta name=twitter:description content="记录了搭建 ClickHouse 集群时遇到的问题及解决方案。"><script type=application/ld+json>{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Posts","item":"https://donglin94.github.io/blog/posts/"},{"@type":"ListItem","position":2,"name":"ClickHouse 集群搭建","item":"https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"}]}</script><script type=application/ld+json>{"@context":"https://schema.org","@type":"BlogPosting","headline":"ClickHouse 集群搭建","name":"ClickHouse 集群搭建","description":"记录了搭建 ClickHouse 集群时遇到的问题及解决方案。","keywords":["ClickHouse"],"articleBody":"人群圈选业务痛点 用户标签多、标签丰富，标签列可达成百甚至上千列。 数据量庞大，用户数多，从而所需运算量也极大。 圈选条件组合多样化，没有固定索引可以优化，存储空间占用极大。 性能要求高，圈选结果要求及时响应，过长的延时会造成营销人群的不准确。 数据更新时效要求高，用户画像要求近实时的更新，过期的人群信息也将直接影响圈选的精准性。 ClickHouse 特性 优势 查询速度快 存储压缩率高，节省空间 架构简单，集群中所有节点功能相同，规避单点故障 社区活跃，应用广泛，产品成熟度高 不足 不支持事务、异步删除与更新 不适合高并发场景 不支持标准 sql，JOIN 由内部实现 集群在线扩容支持不佳，运维成本高 下载安装包 sudo yum install yum-utils sudo rpm --import https://repo.clickhouse.tech/CLICKHOUSE-KEY.GPG sudo yum-config-manager --add-repo https://repo.clickhouse.tech/rpm/clickhouse.repo sudo yum install clickhouse-server clickhouse-client 文件目录 # 默认数据存储路径 /var/lib/clickhouse # 默认日志路径 /var/log/clickhouse-server # 服务端配置文件路径 /etc/clickhouse-server # 核心配置文件详解：https://www.e-learn.cn/topic/4050968 /etc/clickhouse-server/config.xml # 客户端配置文件路径 /etc/clickhouse-client 命令 # 服务端命令 service clickhouse-server start | status | restart | stop # 调试，日志打印在控制台 sudo -u clickhouse /usr/bin/clickhouse-server --config-file /etc/clickhouse-server/config.xml # 启动客户端 clickhouse-client --port 9003 集群部署 在群集的所有机器上安装 ClickHouse 服务端\n在配置文件中设置群集配置\n\u003ctcp_port\u003e9003\u003c/tcp_port\u003e \u003clisten_host\u003e::\u003c/listen_host\u003e \u003cremote_servers incl=\"clickhouse_remote_servers\" /\u003e \u003czookeeper incl=\"zookeeper-servers\" optional=\"true\" /\u003e \u003cmacros incl=\"macros\" optional=\"true\" /\u003e \u003cinclude_from\u003e/etc/clickhouse-server/metrika.xml\u003c/include_from\u003e \u003cyandex\u003e \u003cclickhouse_remote_servers\u003e \u003cck_cluster\u003e \u003cshard\u003e \u003creplica\u003e \u003chost\u003eworker07\u003c/host\u003e \u003cport\u003e9003\u003c/port\u003e \u003c/replica\u003e \u003creplica\u003e \u003chost\u003eworker08\u003c/host\u003e \u003cport\u003e9003\u003c/port\u003e \u003c/replica\u003e \u003creplica\u003e \u003chost\u003eworker09\u003c/host\u003e \u003cport\u003e9003\u003c/port\u003e \u003c/replica\u003e \u003c/shard\u003e \u003c/ck_cluster\u003e \u003c/clickhouse_remote_servers\u003e \u003czookeeper-servers\u003e \u003cnode index=\"3\"\u003e \u003chost\u003emaster01\u003c/host\u003e \u003cport\u003e2181\u003c/port\u003e \u003c/node\u003e \u003cnode index=\"2\"\u003e \u003chost\u003eworker01\u003c/host\u003e \u003cport\u003e2181\u003c/port\u003e \u003c/node\u003e \u003cnode index=\"1\"\u003e \u003chost\u003eworker02\u003c/host\u003e \u003cport\u003e2181\u003c/port\u003e \u003c/node\u003e \u003cnode index=\"5\"\u003e \u003chost\u003eworker03\u003c/host\u003e \u003cport\u003e2181\u003c/port\u003e \u003c/node\u003e \u003cnode index=\"4\"\u003e \u003chost\u003eworker04\u003c/host\u003e \u003cport\u003e2181\u003c/port\u003e \u003c/node\u003e \u003c/zookeeper-servers\u003e \u003cmacros\u003e \u003cshard\u003e0\u003c/shard\u003e \u003creplica\u003eworker07\u003c/replica\u003e \u003c/macros\u003e \u003c/yandex\u003e 分发配置，其自动生效，查看集群\nselect * from system.clusters; 一致性 internal_replication：表示是否只将数据写入其中一个副本，默认为 false\n四种复制模式：\n非复制表，internal_replication=false。写入单机表时，不同服务器查询结果不同；插入到分布式表中的数据被插入到两个本地表中，如果在插入期间没有问题，则两个本地表上的数据保持同步。我们称之为“穷人的复制”，因为复制在网络出现问题的情况下容易发生分歧，没有一个简单的方法来确定哪一个是正确的复制。 非复制表，internal_replication=true。数据只被插入到一个本地表中，但没有任何机制可以将它转移到另一个表中。因此，在不同主机上的本地表看到了不同的数据，查询分布式表时会出现非预期的数据。显然，这是配置 ClickHouse 集群的一种不正确的方法。 复制表，internal_replication=true。插入到分布式表中的数据仅插入到其中一个本地表中，但通过复制机制传输到另一个主机上的表中。因此两个本地表上的数据保持同步。这是官方推荐配置。 复制表，internal_replication=false。数据被插入到两个本地表中，但同时复制表的机制保证重复数据会被删除。数据会从插入的第一个节点复制到其它的节点。其它节点拿到数据后如果发现数据重复，数据会被丢弃。这种情况下，虽然复制保持同步，没有错误发生。但由于不断的重复复制流，会导致写入性能明显的下降。所以这种配置实际应该是避免的。 优化 读的时候是用 distribution 表去读取数据，轮询写入本地表 写入时尽量“大批量，少批次”写入 尽量使用大宽表代替 join，列宽支持 1w+ 集群测试 -- 先创建本地表，再创建分布式表，往分布式表插入数据，数据随机分布在本地表 -- 在每个实例上创建本地表 CREATE TABLE default.cluster3s1r_local(`id` Int32,`website` String,`wechat` String,`FlightDate` Date,Year UInt16) ENGINE = MergeTree(FlightDate, (Year, FlightDate), 8192); -- 创建一个分布式表(指定集群名、数据库名、数据表名、分片KEY) CREATE TABLE default.cluster3s1r_all AS cluster3s1r_local ENGINE = Distributed(ck_cluster, default, cluster3s1r_local, rand()); -- 插入测试数据 INSERT INTO default.cluster3s1r_all (id,website,wechat,FlightDate,Year)values(1,'https://niocoder.com/','java干货','2020-11-28',2020); INSERT INTO default.cluster3s1r_all (id,website,wechat,FlightDate,Year)values(2,'http://www.merryyou.cn/','javaganhuo','2020-11-28',2020); INSERT INTO default.cluster3s1r_all (id,website,wechat,FlightDate,Year)values(3,'http://www.xxxxx.cn/','xxxxx','2020-11-28',2020); -- 查询分布式表 select * from cluster3s1r_all; -- 查询本地表 select * from cluster3s1r_local; -- 创建复制表，连接zk，不用创建分布式表，不配置集群clickhouse_remote_servers。数据写入本地表，其他节点自动同步数据 -- 创建复制表 CREATE TABLE default.cluster1s3r_local on cluster ck_cluster (`id` Int32,`website` String,`wechat` String,`FlightDate` Date,Year UInt16) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/cluster1s3r_local', '{replica}', FlightDate, (Year, FlightDate), 8192); INSERT INTO default.cluster1s3r_all (id,website,wechat,FlightDate,Year)values(1,'https://niocoder.com/','java干货','2020-11-28',2020); select * from cluster1s3r_all; 问题 DB::Exception: Effective user of the process (root) does not match the owner of the data (clickhouse). Run under ‘sudo -u clickhouse’.\nsudo -u clickhouse clickhouse-server –config-file=/etc/clickhouse-server/config.xml\nAccess to file denied: /var/log/clickhouse-server/clickhouse-server.log\nchown -R clickhouse /var/log/clickhouse-server/\nAddress already in use\n更改 tcp 配置，切换 9000 端口为 9003\nThere are two exactly the same ClickHouse instances\n单台节点只能部署一个分片副本，即 3 分片 2 副本需要 6 台服务器\n","wordCount":"1945","inLanguage":"en","datePublished":"2021-06-21T00:00:00Z","dateModified":"2021-06-21T00:00:00Z","author":{"@type":"Person","name":"东临"},"mainEntityOfPage":{"@type":"WebPage","@id":"https://donglin94.github.io/blog/posts/clickhouse-cluster-construction/"},"publisher":{"@type":"Organization","name":"DongLin's Blog","logo":{"@type":"ImageObject","url":"https://donglin94.github.io/blog/favicon.svg"}}}</script></head><body id=top><header class=header><nav class=nav><div class=logo><a href=https://donglin94.github.io/blog/ accesskey=h title="Home (Alt + H)">Home</a><div class=logo-switches></div></div><ul id=menu><li><a href=https://donglin94.github.io/blog/tags/ title=标签><span>标签</span></a></li><li><a href=https://donglin94.github.io/blog/books/ title=书籍><span>书籍</span></a></li><li><a href=https://donglin94.github.io/blog/about/ title=关于><span>关于</span></a></li></ul></nav></header><main class=main><article class=post-single><header class=post-header><div class=breadcrumbs><a href=https://donglin94.github.io/blog/>Home</a>&nbsp;»&nbsp;<a href=https://donglin94.github.io/blog/posts/>Posts</a></div><h1 class=post-title>ClickHouse 集群搭建</h1><div class=post-meta><span title='2021-06-21 00:00:00 +0000 UTC'>2021-06-21</span>&nbsp;·&nbsp;东临</div></header><div class=post-content><h2 id=人群圈选业务痛点>人群圈选业务痛点<a hidden class=anchor aria-hidden=true href=#人群圈选业务痛点>#</a></h2><ul><li>用户标签多、标签丰富，标签列可达成百甚至上千列。</li><li>数据量庞大，用户数多，从而所需运算量也极大。</li><li>圈选条件组合多样化，没有固定索引可以优化，存储空间占用极大。</li><li>性能要求高，圈选结果要求及时响应，过长的延时会造成营销人群的不准确。</li><li>数据更新时效要求高，用户画像要求近实时的更新，过期的人群信息也将直接影响圈选的精准性。</li></ul><h2 id=clickhouse-特性>ClickHouse 特性<a hidden class=anchor aria-hidden=true href=#clickhouse-特性>#</a></h2><ul><li>优势<ol><li>查询速度快</li><li>存储压缩率高，节省空间</li><li>架构简单，集群中所有节点功能相同，规避单点故障</li><li>社区活跃，应用广泛，产品成熟度高</li></ol></li><li>不足<ol><li>不支持事务、异步删除与更新</li><li>不适合高并发场景</li><li>不支持标准 sql，JOIN 由内部实现</li><li>集群在线扩容支持不佳，运维成本高</li></ol></li></ul><h2 id=下载安装包>下载安装包<a hidden class=anchor aria-hidden=true href=#下载安装包>#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl>sudo yum install yum-utils
+</span></span><span class=line><span class=cl>sudo rpm --import https://repo.clickhouse.tech/CLICKHOUSE-KEY.GPG
+</span></span><span class=line><span class=cl>sudo yum-config-manager --add-repo https://repo.clickhouse.tech/rpm/clickhouse.repo
+</span></span><span class=line><span class=cl>sudo yum install clickhouse-server clickhouse-client
+</span></span></code></pre></div><h2 id=文件目录>文件目录<a hidden class=anchor aria-hidden=true href=#文件目录>#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl><span class=c1># 默认数据存储路径</span>
+</span></span><span class=line><span class=cl>/var/lib/clickhouse
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 默认日志路径</span>
+</span></span><span class=line><span class=cl>/var/log/clickhouse-server
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 服务端配置文件路径</span>
+</span></span><span class=line><span class=cl>/etc/clickhouse-server
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 核心配置文件详解：https://www.e-learn.cn/topic/4050968</span>
+</span></span><span class=line><span class=cl>/etc/clickhouse-server/config.xml
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 客户端配置文件路径</span>
+</span></span><span class=line><span class=cl>/etc/clickhouse-client
+</span></span></code></pre></div><h2 id=命令>命令<a hidden class=anchor aria-hidden=true href=#命令>#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-shell data-lang=shell><span class=line><span class=cl><span class=c1># 服务端命令</span>
+</span></span><span class=line><span class=cl>service clickhouse-server start <span class=p>|</span> status <span class=p>|</span> restart <span class=p>|</span> stop
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 调试，日志打印在控制台</span>
+</span></span><span class=line><span class=cl>sudo -u clickhouse /usr/bin/clickhouse-server --config-file /etc/clickhouse-server/config.xml
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c1># 启动客户端</span>
+</span></span><span class=line><span class=cl>clickhouse-client --port <span class=m>9003</span>
+</span></span></code></pre></div><h2 id=集群部署>集群部署<a hidden class=anchor aria-hidden=true href=#集群部署>#</a></h2><ol><li><p>在群集的所有机器上安装 ClickHouse 服务端</p></li><li><p>在配置文件中设置群集配置</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-html data-lang=html><span class=line><span class=cl><span class=c>&lt;!--config.xml配置--&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>tcp_port</span><span class=p>&gt;</span>9003<span class=p>&lt;/</span><span class=nt>tcp_port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>listen_host</span><span class=p>&gt;</span>::<span class=p>&lt;/</span><span class=nt>listen_host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=c>&lt;!--incl属性表示可从外部文件中获取节点名--&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>remote_servers</span> <span class=na>incl</span><span class=o>=</span><span class=s>&#34;clickhouse_remote_servers&#34;</span> <span class=p>/&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>zookeeper</span> <span class=na>incl</span><span class=o>=</span><span class=s>&#34;zookeeper-servers&#34;</span> <span class=na>optional</span><span class=o>=</span><span class=s>&#34;true&#34;</span> <span class=p>/&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>macros</span> <span class=na>incl</span><span class=o>=</span><span class=s>&#34;macros&#34;</span> <span class=na>optional</span><span class=o>=</span><span class=s>&#34;true&#34;</span> <span class=p>/&gt;</span>
+</span></span><span class=line><span class=cl><span class=c>&lt;!--使用外部扩展配置文件--&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>include_from</span><span class=p>&gt;</span>/etc/clickhouse-server/metrika.xml<span class=p>&lt;/</span><span class=nt>include_from</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl><span class=c>&lt;!--metrika.xml配置--&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;</span><span class=nt>yandex</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=c>&lt;!-- 集群配置 --&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;</span><span class=nt>clickhouse_remote_servers</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>ck_cluster</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>shard</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker07<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>9003<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;/</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker08<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>9003<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;/</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker09<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>          <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>9003<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>        <span class=p>&lt;/</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;/</span><span class=nt>shard</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>ck_cluster</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;/</span><span class=nt>clickhouse_remote_servers</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=c>&lt;!--zookeeper相关配置--&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;</span><span class=nt>zookeeper-servers</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>node</span> <span class=na>index</span><span class=o>=</span><span class=s>&#34;3&#34;</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>master01<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>2181<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>node</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>node</span> <span class=na>index</span><span class=o>=</span><span class=s>&#34;2&#34;</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker01<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>2181<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>node</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>node</span> <span class=na>index</span><span class=o>=</span><span class=s>&#34;1&#34;</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker02<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>2181<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>node</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>node</span> <span class=na>index</span><span class=o>=</span><span class=s>&#34;5&#34;</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker03<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>2181<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>node</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>node</span> <span class=na>index</span><span class=o>=</span><span class=s>&#34;4&#34;</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>host</span><span class=p>&gt;</span>worker04<span class=p>&lt;/</span><span class=nt>host</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>      <span class=p>&lt;</span><span class=nt>port</span><span class=p>&gt;</span>2181<span class=p>&lt;/</span><span class=nt>port</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;/</span><span class=nt>node</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;/</span><span class=nt>zookeeper-servers</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=c>&lt;!--环境变量 --&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;</span><span class=nt>macros</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>shard</span><span class=p>&gt;</span>0<span class=p>&lt;/</span><span class=nt>shard</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>    <span class=p>&lt;</span><span class=nt>replica</span><span class=p>&gt;</span>worker07<span class=p>&lt;/</span><span class=nt>replica</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl>  <span class=p>&lt;/</span><span class=nt>macros</span><span class=p>&gt;</span>
+</span></span><span class=line><span class=cl><span class=p>&lt;/</span><span class=nt>yandex</span><span class=p>&gt;</span>
+</span></span></code></pre></div></li><li><p>分发配置，其自动生效，查看集群</p><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=k>select</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=k>from</span><span class=w> </span><span class=k>system</span><span class=p>.</span><span class=n>clusters</span><span class=p>;</span><span class=w>
+</span></span></span></code></pre></div></li></ol><h2 id=一致性>一致性<a hidden class=anchor aria-hidden=true href=#一致性>#</a></h2><p>internal_replication：表示是否只将数据写入其中一个副本，默认为 false</p><p>四种复制模式：</p><ul><li>非复制表，internal_replication=false。写入单机表时，不同服务器查询结果不同；插入到分布式表中的数据被插入到两个本地表中，如果在插入期间没有问题，则两个本地表上的数据保持同步。我们称之为“穷人的复制”，因为复制在网络出现问题的情况下容易发生分歧，没有一个简单的方法来确定哪一个是正确的复制。</li><li>非复制表，internal_replication=true。数据只被插入到一个本地表中，但没有任何机制可以将它转移到另一个表中。因此，在不同主机上的本地表看到了不同的数据，查询分布式表时会出现非预期的数据。显然，这是配置 ClickHouse 集群的一种不正确的方法。</li><li>复制表，internal_replication=true。插入到分布式表中的数据仅插入到其中一个本地表中，但通过复制机制传输到另一个主机上的表中。因此两个本地表上的数据保持同步。这是官方推荐配置。</li><li>复制表，internal_replication=false。数据被插入到两个本地表中，但同时复制表的机制保证重复数据会被删除。数据会从插入的第一个节点复制到其它的节点。其它节点拿到数据后如果发现数据重复，数据会被丢弃。这种情况下，虽然复制保持同步，没有错误发生。但由于不断的重复复制流，会导致写入性能明显的下降。所以这种配置实际应该是避免的。</li></ul><h2 id=优化>优化<a hidden class=anchor aria-hidden=true href=#优化>#</a></h2><ol><li>读的时候是用 distribution 表去读取数据，轮询写入本地表</li><li>写入时尽量“大批量，少批次”写入</li><li>尽量使用大宽表代替 join，列宽支持 1w+</li></ol><h2 id=集群测试>集群测试<a hidden class=anchor aria-hidden=true href=#集群测试>#</a></h2><div class=highlight><pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=line><span class=cl><span class=c1>-- 先创建本地表，再创建分布式表，往分布式表插入数据，数据随机分布在本地表
+</span></span></span><span class=line><span class=cl><span class=c1>-- 在每个实例上创建本地表
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster3s1r_local</span><span class=p>(</span><span class=o>`</span><span class=n>id</span><span class=o>`</span><span class=w> </span><span class=n>Int32</span><span class=p>,</span><span class=o>`</span><span class=n>website</span><span class=o>`</span><span class=w> </span><span class=n>String</span><span class=p>,</span><span class=o>`</span><span class=n>wechat</span><span class=o>`</span><span class=w> </span><span class=n>String</span><span class=p>,</span><span class=o>`</span><span class=n>FlightDate</span><span class=o>`</span><span class=w> </span><span class=nb>Date</span><span class=p>,</span><span class=k>Year</span><span class=w> </span><span class=n>UInt16</span><span class=p>)</span><span class=w> </span><span class=n>ENGINE</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>MergeTree</span><span class=p>(</span><span class=n>FlightDate</span><span class=p>,</span><span class=w> </span><span class=p>(</span><span class=k>Year</span><span class=p>,</span><span class=w> </span><span class=n>FlightDate</span><span class=p>),</span><span class=w> </span><span class=mi>8192</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c1>-- 创建一个分布式表(指定集群名、数据库名、数据表名、分片KEY)
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster3s1r_all</span><span class=w> </span><span class=k>AS</span><span class=w> </span><span class=n>cluster3s1r_local</span><span class=w> </span><span class=n>ENGINE</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>Distributed</span><span class=p>(</span><span class=n>ck_cluster</span><span class=p>,</span><span class=w> </span><span class=k>default</span><span class=p>,</span><span class=w> </span><span class=n>cluster3s1r_local</span><span class=p>,</span><span class=w> </span><span class=n>rand</span><span class=p>());</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c1>-- 插入测试数据
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>INSERT</span><span class=w> </span><span class=k>INTO</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster3s1r_all</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=n>website</span><span class=p>,</span><span class=n>wechat</span><span class=p>,</span><span class=n>FlightDate</span><span class=p>,</span><span class=k>Year</span><span class=p>)</span><span class=k>values</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span><span class=s1>&#39;https://niocoder.com/&#39;</span><span class=p>,</span><span class=s1>&#39;java干货&#39;</span><span class=p>,</span><span class=s1>&#39;2020-11-28&#39;</span><span class=p>,</span><span class=mi>2020</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>INSERT</span><span class=w> </span><span class=k>INTO</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster3s1r_all</span><span class=w> </span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=n>website</span><span class=p>,</span><span class=n>wechat</span><span class=p>,</span><span class=n>FlightDate</span><span class=p>,</span><span class=k>Year</span><span class=p>)</span><span class=k>values</span><span class=p>(</span><span class=mi>2</span><span class=p>,</span><span class=s1>&#39;http://www.merryyou.cn/&#39;</span><span class=p>,</span><span class=s1>&#39;javaganhuo&#39;</span><span class=p>,</span><span class=s1>&#39;2020-11-28&#39;</span><span class=p>,</span><span class=mi>2020</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>INSERT</span><span class=w> </span><span class=k>INTO</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster3s1r_all</span><span class=w> </span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=n>website</span><span class=p>,</span><span class=n>wechat</span><span class=p>,</span><span class=n>FlightDate</span><span class=p>,</span><span class=k>Year</span><span class=p>)</span><span class=k>values</span><span class=p>(</span><span class=mi>3</span><span class=p>,</span><span class=s1>&#39;http://www.xxxxx.cn/&#39;</span><span class=p>,</span><span class=s1>&#39;xxxxx&#39;</span><span class=p>,</span><span class=s1>&#39;2020-11-28&#39;</span><span class=p>,</span><span class=mi>2020</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c1>-- 查询分布式表
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>select</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=k>from</span><span class=w> </span><span class=n>cluster3s1r_all</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c1>-- 查询本地表
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>select</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=k>from</span><span class=w> </span><span class=n>cluster3s1r_local</span><span class=p>;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c1>-- 创建复制表，连接zk，不用创建分布式表，不配置集群clickhouse_remote_servers。数据写入本地表，其他节点自动同步数据
+</span></span></span><span class=line><span class=cl><span class=c1>-- 创建复制表
+</span></span></span><span class=line><span class=cl><span class=c1></span><span class=k>CREATE</span><span class=w> </span><span class=k>TABLE</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster1s3r_local</span><span class=w> </span><span class=k>on</span><span class=w> </span><span class=k>cluster</span><span class=w> </span><span class=n>ck_cluster</span><span class=w> </span><span class=p>(</span><span class=o>`</span><span class=n>id</span><span class=o>`</span><span class=w> </span><span class=n>Int32</span><span class=p>,</span><span class=o>`</span><span class=n>website</span><span class=o>`</span><span class=w> </span><span class=n>String</span><span class=p>,</span><span class=o>`</span><span class=n>wechat</span><span class=o>`</span><span class=w> </span><span class=n>String</span><span class=p>,</span><span class=o>`</span><span class=n>FlightDate</span><span class=o>`</span><span class=w> </span><span class=nb>Date</span><span class=p>,</span><span class=k>Year</span><span class=w> </span><span class=n>UInt16</span><span class=p>)</span><span class=w> </span><span class=n>ENGINE</span><span class=w> </span><span class=o>=</span><span class=w> </span><span class=n>ReplicatedMergeTree</span><span class=p>(</span><span class=s1>&#39;/clickhouse/tables/{shard}/cluster1s3r_local&#39;</span><span class=p>,</span><span class=w> </span><span class=s1>&#39;{replica}&#39;</span><span class=p>,</span><span class=w> </span><span class=n>FlightDate</span><span class=p>,</span><span class=w> </span><span class=p>(</span><span class=k>Year</span><span class=p>,</span><span class=w> </span><span class=n>FlightDate</span><span class=p>),</span><span class=w> </span><span class=mi>8192</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>INSERT</span><span class=w> </span><span class=k>INTO</span><span class=w> </span><span class=k>default</span><span class=p>.</span><span class=n>cluster1s3r_all</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=p>(</span><span class=n>id</span><span class=p>,</span><span class=n>website</span><span class=p>,</span><span class=n>wechat</span><span class=p>,</span><span class=n>FlightDate</span><span class=p>,</span><span class=k>Year</span><span class=p>)</span><span class=k>values</span><span class=p>(</span><span class=mi>1</span><span class=p>,</span><span class=s1>&#39;https://niocoder.com/&#39;</span><span class=p>,</span><span class=s1>&#39;java干货&#39;</span><span class=p>,</span><span class=s1>&#39;2020-11-28&#39;</span><span class=p>,</span><span class=mi>2020</span><span class=p>);</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=k>select</span><span class=w> </span><span class=o>*</span><span class=w> </span><span class=k>from</span><span class=w> </span><span class=n>cluster1s3r_all</span><span class=p>;</span><span class=w>
+</span></span></span></code></pre></div><h2 id=问题>问题<a hidden class=anchor aria-hidden=true href=#问题>#</a></h2><ol><li><p>DB::Exception: Effective user of the process (root) does not match the owner of the data (clickhouse). Run under &lsquo;sudo -u clickhouse&rsquo;.</p><p>sudo -u clickhouse clickhouse-server &ndash;config-file=/etc/clickhouse-server/config.xml</p></li><li><p>Access to file denied: /var/log/clickhouse-server/clickhouse-server.log</p><p>chown -R clickhouse /var/log/clickhouse-server/</p></li><li><p>Address already in use</p><p>更改 tcp 配置，切换 9000 端口为 9003</p></li><li><p>There are two exactly the same ClickHouse instances</p><p>单台节点只能部署一个分片副本，即 3 分片 2 副本需要 6 台服务器</p></li></ol></div><footer class=post-footer><ul class=post-tags><li><a href=https://donglin94.github.io/blog/tags/clickhouse/>ClickHouse</a></li></ul><nav class=paginav><a class=prev href=https://donglin94.github.io/blog/posts/statistics-hdfs-small-files/><span class=title>« Prev</span><br><span>统计 HDFS 小文件</span></a>
+<a class=next href=https://donglin94.github.io/blog/posts/notes-on-in-depth-understanding-of-virtual-machines/><span class=title>Next »</span><br><span>《深入理解虚拟机》笔记</span></a></nav></footer></article></main><footer class=footer><span>&copy; 2026 <a href=https://donglin94.github.io/blog/>DongLin's Blog</a></span>
+<span>Powered by
+<a href=https://gohugo.io/ rel="noopener noreferrer" target=_blank>Hugo</a> &
+        <a href=https://github.com/sherlcok314159/MyPaperMod rel=noopener target=_blank>PaperMod</a></span></footer><a href=#top aria-label="go to top" title="Go to Top (Alt + G)" class=top-link id=top-link accesskey=g><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentcolor"><path d="M12 6H0l6-6z"/></svg></a><script>(function(e,t){var s=document,o="script",n=s.createElement(o),i=s.getElementsByTagName(o)[0];n.src=e,t&&n.addEventListener("load",function(e){t(e)}),i.parentNode.insertBefore(n,i)})("/blog/js/pangu.min.js",function(){pangu.spacingPage()})</script><script src=https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js></script>
+<link rel=stylesheet href=https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css><script src=https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js></script>
+<script>document.addEventListener("DOMContentLoaded",function(){document.querySelectorAll(".post-content img").forEach(function(e){if(e.closest("a"))return;var t=document.createElement("a");t.setAttribute("data-fancybox","gallery"),t.setAttribute("href",e.getAttribute("src")),e.parentNode.insertBefore(t,e),t.appendChild(e)})})</script><script>(function(){var e,t,n,s=document.getElementsByTagName("code");for(n=0;n<s.length;){if(t=s[n],t.parentNode.tagName!=="PRE"&&t.childElementCount===0&&(e=t.textContent,/^\$[^$]/.test(e)&&/[^$]\$$/.test(e)&&(e=e.replace(/^\$/,"\\(").replace(/\$$/,"\\)"),t.textContent=e),/^\\\((.|\s)+\\\)$/.test(e)||/^\\\[(.|\s)+\\\]$/.test(e)||/^\$(.|\s)+\$$/.test(e)||/^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(e))){t.outerHTML=t.innerHTML;continue}n++}})()</script><script>let menu=document.getElementById("menu");menu&&(menu.scrollLeft=localStorage.getItem("menu-scroll-position"),menu.onscroll=function(){localStorage.setItem("menu-scroll-position",menu.scrollLeft)}),document.querySelectorAll('a[href^="#"]').forEach(e=>{e.addEventListener("click",function(e){e.preventDefault();var t=this.getAttribute("href").substr(1);window.matchMedia("(prefers-reduced-motion: reduce)").matches?document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView():document.querySelector(`[id='${decodeURIComponent(t)}']`).scrollIntoView({behavior:"smooth"}),t==="top"?history.replaceState(null,null," "):history.pushState(null,null,`#${t}`)})})</script><script>var mybutton=document.getElementById("top-link");window.onscroll=function(){document.body.scrollTop>800||document.documentElement.scrollTop>800?(mybutton.style.visibility="visible",mybutton.style.opacity="1"):(mybutton.style.visibility="hidden",mybutton.style.opacity="0")}</script><script>document.querySelectorAll("pre > code").forEach(e=>{const n=e.parentNode.parentNode,t=document.createElement("button");t.classList.add("copy-code"),t.innerHTML="copy";function s(){t.innerHTML="copied!",setTimeout(()=>{t.innerHTML="copy"},2e3)}t.addEventListener("click",t=>{if("clipboard"in navigator){navigator.clipboard.writeText(e.textContent),s();return}const n=document.createRange();n.selectNodeContents(e);const o=window.getSelection();o.removeAllRanges(),o.addRange(n);try{document.execCommand("copy"),s()}catch{}o.removeRange(n)}),n.classList.contains("highlight")?n.appendChild(t):n.parentNode.firstChild==n||(e.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName=="TABLE"?e.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(t):e.parentNode.appendChild(t))})</script></body></html>

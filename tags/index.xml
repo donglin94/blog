@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Tags on DongLin&#39;s Blog</title>
+    <link>https://donglin94.github.io/blog/tags/</link>
+    <description>Recent content in Tags on DongLin&#39;s Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en</language>
+    <lastBuildDate>Fri, 10 Oct 2025 00:00:00 +0000</lastBuildDate><atom:link href="https://donglin94.github.io/blog/tags/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Doris</title>
+      <link>https://donglin94.github.io/blog/tags/doris/</link>
+      <pubDate>Fri, 10 Oct 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/doris/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Thought</title>
+      <link>https://donglin94.github.io/blog/tags/thought/</link>
+      <pubDate>Fri, 10 Oct 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/thought/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>数仓</title>
+      <link>https://donglin94.github.io/blog/tags/%E6%95%B0%E4%BB%93/</link>
+      <pubDate>Fri, 10 Oct 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/%E6%95%B0%E4%BB%93/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>DBT</title>
+      <link>https://donglin94.github.io/blog/tags/dbt/</link>
+      <pubDate>Wed, 30 Jul 2025 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/dbt/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Flink</title>
+      <link>https://donglin94.github.io/blog/tags/flink/</link>
+      <pubDate>Wed, 02 Mar 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/flink/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>HDFS</title>
+      <link>https://donglin94.github.io/blog/tags/hdfs/</link>
+      <pubDate>Wed, 02 Feb 2022 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/hdfs/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>ClickHouse</title>
+      <link>https://donglin94.github.io/blog/tags/clickhouse/</link>
+      <pubDate>Mon, 21 Jun 2021 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/clickhouse/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>JVM</title>
+      <link>https://donglin94.github.io/blog/tags/jvm/</link>
+      <pubDate>Sun, 28 Apr 2019 00:00:00 +0000</pubDate>
+      
+      <guid>https://donglin94.github.io/blog/tags/jvm/</guid>
+      <description></description>
+    </item>
+    
+  </channel>
+</rss>

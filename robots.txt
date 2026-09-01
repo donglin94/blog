@@ -1,5 +1,3 @@
-
 User-agent: *
-Allow: /
-
-Sitemap: https://donglin94.github.io/blog/sitemap-index.xml
+Disallow:
+Sitemap: https://donglin94.github.io/blog/sitemap.xml
