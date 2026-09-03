@@ -67,7 +67,14 @@
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://donglin94.github.io/blog/about/</guid>
-      <description>Hi! 👋 I am Donglin, A backend developer. It is really nice to meet you. This site is a backup of my notes. Powered by: MyPaperMod</description>
+      <description>&lt;!-- 与列表页统一背景（Kind=page 默认无 .list 背景） --&gt;
+&lt;style&gt;
+  body { background: var(--code-bg); }
+  body.dark { background: var(--theme); }
+&lt;/style&gt;
+&lt;p&gt;Hi! 👋&lt;/p&gt;
+&lt;p&gt;I am Donglin, A backend developer. It is really nice to meet you.&lt;/p&gt;
+&lt;p&gt;This site is a backup of my notes. Powered by: &lt;a href=&#34;https://github.com/sherlcok314159/MyPaperMod&#34;&gt;MyPaperMod&lt;/a&gt;&lt;/p&gt;</description>
     </item>
     
     <item>
